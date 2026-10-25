@@ -1,0 +1,33 @@
+[project]
+name = "findex"
+version = "0.1.0"
+description = "Власна пошукова система, яку будуємо протягом курсу Python (лаби 1–8)"
+readme = "README.md"
+authors = [
+    { name = "Yakiv Mazurevych" }
+]
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+findex-stats = "findex.stats:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["uv_build>=0.8,<0.12"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

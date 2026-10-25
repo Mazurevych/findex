@@ -13,3 +13,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Файли індексу (будуються командою findex.index)
+*.bin
+*.pkl

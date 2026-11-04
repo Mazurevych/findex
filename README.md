@@ -1015,6 +1015,7 @@ Jinja2-шаблони `web/templates/`, CSS через `StaticFiles` (`/static/s
 | local, 1 worker, `async def` | `/search` | 50 | 13.3 | 4728 | 4914 | 5039 | 150/150 |
 | local, 1 worker, `def` | `/search` | 50 | 13.3 | 4598 | 5314 | 5347 | 150/150 |
 | local, 4 workers | `/search` | 50 | 21.7 | 3026 | 4756 | 4856 | 276/276 |
+| deployed | `/search` | 20 | 1.5 | 59 | 26914 | 28715 | 6/26 |
 <!-- lab07-load:end -->
 
 **Як читати таблицю (зв'язок із лабами 5–6).**

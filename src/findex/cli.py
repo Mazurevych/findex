@@ -15,12 +15,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import sys
 import time
 import tracemalloc
 from collections import Counter
+from contextlib import aclosing, nullcontext
 from enum import StrEnum
 from itertools import islice
 from pathlib import Path
@@ -28,17 +30,23 @@ from typing import Annotated
 
 import typer
 from rich.console import Console
+from rich.live import Live
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn, TimeElapsedColumn
 from rich.table import Table
 from rich.text import Text
 
 from findex.corpus import count_documents, iter_documents
+from findex.crawler import USER_AGENT, CrawlStats, crawl
+from findex.crawler.crawl import make_client
+from findex.crawler.urls import canonicalize
 from findex.index import Index, build_index, human_bytes
+from findex.parallel import BuildStats, build_parallel
 from findex.query import QueryError
 from findex.scoring import get_scorer
 from findex.search import query_terms, search
 from findex.snippets import Snippet, snippet_for
 from findex.store import IndexFormatError, open_index, save
+from findex.sysinfo import peak_rss_bytes
 
 log = logging.getLogger("findex")
 
@@ -67,6 +75,12 @@ class FormatOpt(StrEnum):
 class ScorerOpt(StrEnum):
     bm25 = "bm25"
     tfidf = "tfidf"
+
+
+class ExecutorOpt(StrEnum):
+    serial = "serial"
+    threads = "threads"
+    processes = "processes"
 
 
 class EngineOpt(StrEnum):
@@ -107,14 +121,27 @@ def index_cmd(
         bool, typer.Option("--positions", help="зберігати позиції (для фраз)")
     ] = False,
     limit: Annotated[int | None, typer.Option(min=0, help="лише перші N документів")] = None,
-    layout: Annotated[LayoutOpt, typer.Option(help="як зберігати постінги")] = LayoutOpt.slots,
+    layout: Annotated[LayoutOpt, typer.Option(help="як зберігати постінги")] = LayoutOpt.array,
     fmt: Annotated[
         FormatOpt | None,
         typer.Option("--format", help="формат файлу; за замовчуванням за розширенням"),
     ] = None,
+    executor: Annotated[
+        ExecutorOpt, typer.Option(help="як розпаралелити побудову (лаба 5)")
+    ] = ExecutorOpt.processes,
+    workers: Annotated[
+        int | None, typer.Option("--workers", "-w", min=1, help="кількість робітників [CPU]")
+    ] = None,
+    trace_memory: Annotated[
+        bool, typer.Option(help="міряти пік пам'яті tracemalloc (у рази повільніше)")
+    ] = False,
     as_json: Annotated[bool, typer.Option("--json", help="вимірювання як JSON")] = False,
 ) -> None:
-    """Будує інвертований індекс і зберігає його у файл."""
+    """Будує інвертований індекс і зберігає його у файл.
+
+    За замовчуванням — паралельно процесами (`--executor processes`, `--workers` = кількість
+    ядер). З `--limit` індекс будується послідовно потоком документів (як у лабі 2).
+    """
     if not corpus.exists():
         raise fail(f"корпус не знайдено: {corpus}")
     file_format = fmt.value if fmt else ("pickle" if output.suffix == ".pkl" else "binary")
@@ -125,8 +152,10 @@ def index_cmd(
         total = min(total, limit)
     log.info("indexing %d documents from %s", total, corpus)
 
-    tracemalloc.start()
+    if trace_memory:
+        tracemalloc.start()
     t0 = time.perf_counter()
+    stats: BuildStats | None = None
     with Progress(
         TextColumn("[bold]Індексація"),
         BarColumn(),
@@ -137,16 +166,28 @@ def index_cmd(
         transient=True,
     ) as bar:
         task = bar.add_task("index", total=total)
-        index = build_index(
-            islice(iter_documents(corpus), limit),
-            layout=layout.value,
-            positions=positions,
-            corpus_root=corpus if corpus.is_dir() else corpus.parent,
-            progress=lambda: bar.advance(task),
-        )
+        if limit is not None:
+            # --limit: перші N документів потоком (лаба 2) — шматки наперед не порахуєш
+            index = build_index(
+                islice(iter_documents(corpus), limit),
+                layout=layout.value,
+                positions=positions,
+                corpus_root=corpus if corpus.is_dir() else corpus.parent,
+                progress=lambda: bar.advance(task),
+            )
+        else:
+            index, stats = build_parallel(
+                corpus,
+                executor=executor.value,
+                workers=workers,
+                positions=positions,
+                layout=layout.value,
+                on_chunk_done=lambda n: bar.advance(task, n),
+            )
     build_s = time.perf_counter() - t0
-    index_bytes, build_peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
+    index_bytes, build_peak = tracemalloc.get_traced_memory() if trace_memory else (0, 0)
+    if trace_memory:
+        tracemalloc.stop()
 
     output.parent.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
@@ -166,6 +207,10 @@ def index_cmd(
         "index_bytes": index_bytes,
         "save_s": save_s,
         "file_bytes": size,
+        "executor": stats.executor if stats else "stream",
+        "workers": stats.workers if stats else 1,
+        "merge_s": stats.merge_s if stats else 0.0,
+        "cpu_s": stats.cpu_s if stats else None,
     }
     if as_json:
         typer.echo(json.dumps(result))
@@ -178,7 +223,11 @@ def index_cmd(
     table.add_row("Термів", f"{len(index):,}")
     table.add_row("Постінгів", f"{result['postings']:,}")
     table.add_row("Постінги", layout.value + (" + позиції" if positions else ""))
-    table.add_row("Побудова", f"{build_s:.2f} с, пік пам'яті {human_bytes(build_peak)}")
+    how = f"{stats.executor} × {stats.workers}" if stats else "потоком (--limit)"
+    peak = f", пік пам'яті {human_bytes(build_peak)}" if trace_memory else ""
+    table.add_row("Побудова", f"{build_s:.2f} с ({how}){peak}")
+    if stats is not None:
+        table.add_row("  з них злиття", f"{stats.merge_s:.2f} с, CPU разом {stats.cpu_s:.2f} с")
     table.add_row("Збереження", f"{save_s:.2f} с → {output} ({human_bytes(size)}, {file_format})")
     out.print(table)
 
@@ -322,6 +371,163 @@ def stats_cmd(
         for rank, (term, count) in enumerate(cf.most_common(top), start=1):
             terms.add_row(str(rank), term, f"{count:,}", f"{ix.df(term):,}")
         out.print(terms)
+
+
+# --- findex crawl ----------------------------------------------------------------
+
+
+class ScopeOpt(StrEnum):
+    prefix = "prefix"
+    domain = "domain"
+
+
+def _stats_table(stats: CrawlStats, max_pages: int) -> Table:
+    table = Table(title="findex crawl", title_justify="left", show_header=False, box=None)
+    table.add_column(style="bold")
+    table.add_column(justify="right")
+    table.add_row("Сторінок", f"{stats.pages:,} / {max_pages:,}")
+    table.add_row("Сторінок/с", f"{stats.pages_per_s:.1f}")
+    table.add_row("У польоті", f"{stats.in_flight}")
+    table.add_row("У черзі", f"{stats.queued:,}")
+    table.add_row("Помилок", f"{stats.errors}")
+    table.add_row("Заборонено robots.txt", f"{stats.robots_blocked}")
+    table.add_row("Час", f"{stats.elapsed:.1f} с")
+    return table
+
+
+async def _crawl_to_file(
+    seeds: list[str],
+    output: Path,
+    *,
+    max_pages: int,
+    concurrency: int,
+    per_host: int,
+    delay: float,
+    scope: ScopeOpt,
+    timeout: float,
+    stats: CrawlStats,
+    live: Live | None,
+) -> None:
+    prefixes = None
+    if scope is ScopeOpt.prefix:
+        prefixes = [p for p in (canonicalize(s) for s in seeds) if p]
+        prefixes = [p.rsplit("/", 1)[0] + "/" for p in prefixes]
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("w", encoding="utf-8") as f:
+        pages = crawl(
+            seeds,
+            max_pages=max_pages,
+            concurrency=concurrency,
+            per_host=per_host,
+            min_delay=delay,
+            scope_prefixes=prefixes,
+            timeout=timeout,
+            stats=stats,
+            client=make_client(USER_AGENT, concurrency),
+        )
+        async with aclosing(pages):
+            async for page in pages:
+                # одна сторінка — один рядок, одразу на диск (потоково, без накопичення)
+                record = {
+                    "id": page.url,
+                    "url": page.url,
+                    "title": page.title,
+                    "text": page.text,
+                    "fetched_at": page.fetched_at,
+                }
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+                f.flush()
+                if live is not None:
+                    live.update(_stats_table(stats, max_pages))
+
+
+@app.command("crawl")
+def crawl_cmd(
+    seeds: Annotated[list[str], typer.Argument(metavar="SEED-URL...", help="стартові URL")],
+    max_pages: Annotated[int, typer.Option(min=1, help="бюджет сторінок")] = 500,
+    concurrency: Annotated[int, typer.Option(min=1, help="одночасних запитів загалом")] = 10,
+    per_host: Annotated[int, typer.Option(min=1, help="одночасних запитів до хоста")] = 2,
+    delay: Annotated[float, typer.Option(min=0, help="мін. пауза між запитами до хоста, с")] = 0.5,
+    output: Annotated[Path, typer.Option("--out", "-o", help="JSON lines")] = Path(
+        "data/crawl.jsonl"
+    ),
+    log_file: Annotated[Path, typer.Option("--log", help="журнал по кожному URL")] = Path(
+        "crawl.log"
+    ),
+    scope: Annotated[
+        ScopeOpt, typer.Option(help="prefix: лише під шляхом seed; domain: увесь хост")
+    ] = ScopeOpt.prefix,
+    timeout: Annotated[float, typer.Option(min=0.1, help="таймаут запиту, с")] = 10.0,
+    debug: Annotated[
+        bool, typer.Option(help="asyncio debug: попереджати про блокування циклу > 100 мс")
+    ] = False,
+    show_live: Annotated[bool, typer.Option("--live/--no-live", help="живий індикатор")] = True,
+    as_json: Annotated[bool, typer.Option("--json", help="підсумок як JSON")] = False,
+) -> None:
+    """Ввічливо обходить сайт і пише сторінки в JSON lines для `findex index`.
+
+    Виконує robots.txt, представляється чесним User-Agent, обмежує запити до хоста
+    і зупиняється на --max-pages. Обходьте лише сайти, які це дозволяють.
+    """
+    if not all(canonicalize(s) for s in seeds):
+        raise fail("seed має бути http(s)-URL")
+    handler = logging.FileHandler(log_file, mode="w", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    crawler_log = logging.getLogger("findex.crawler")
+    crawler_log.addHandler(handler)
+    crawler_log.setLevel(logging.INFO)
+    crawler_log.propagate = log.getEffectiveLevel() <= logging.INFO  # у stderr лише з -v
+
+    stats = CrawlStats()
+    use_live = show_live and not as_json and err.is_terminal
+    try:
+        with (
+            Live(_stats_table(stats, max_pages), console=err, refresh_per_second=4, transient=False)
+            if use_live
+            else nullcontext() as live
+        ):
+            asyncio.run(
+                _crawl_to_file(
+                    seeds,
+                    output,
+                    max_pages=max_pages,
+                    concurrency=concurrency,
+                    per_host=per_host,
+                    delay=delay,
+                    scope=scope,
+                    timeout=timeout,
+                    stats=stats,
+                    live=live if isinstance(live, Live) else None,
+                ),
+                debug=debug,
+            )
+    except KeyboardInterrupt:
+        err.print("[yellow]Зупинено (Ctrl-C).[/] Уже завантажене збережено.")
+    finally:
+        crawler_log.removeHandler(handler)
+        handler.close()
+
+    summary = {
+        "pages": stats.pages,
+        "requests": stats.fetched,
+        "errors": stats.errors,
+        "robots_blocked": stats.robots_blocked,
+        "skipped": stats.skipped,
+        "max_in_flight": stats.max_in_flight,
+        "wall_s": round(stats.elapsed, 3),
+        "pages_per_s": round(stats.pages_per_s, 2),
+        "bytes": stats.bytes,
+        "peak_rss_bytes": peak_rss_bytes(),
+        "out": str(output),
+    }
+    if as_json:
+        typer.echo(json.dumps(summary))
+        return
+    out.print(
+        f"Готово: {stats.pages:,} сторінок за {stats.elapsed:.1f} с "
+        f"({stats.pages_per_s:.1f}/с), помилок {stats.errors}, "
+        f"заборонено robots.txt {stats.robots_blocked} → {output}; журнал: {log_file}"
+    )
 
 
 def run_subcommand(name: str) -> None:

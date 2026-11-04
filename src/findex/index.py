@@ -257,6 +257,29 @@ class Index(Mapping[str, PostingList]):
 # --- побудова ----------------------------------------------------------------------
 
 
+type DocTerms = list[tuple[str, int, Sequence[int]]]  # (терм, tf, позиції) одного документа
+
+
+def analyze_document(text: str, positions: bool) -> tuple[int, DocTerms]:
+    """Один документ -> (кількість токенів, [(терм, tf, позиції)]) у порядку першої появи.
+
+    Спільна для послідовної (`build_index`) і паралельної (`findex.parallel`) побудови,
+    тож обидві гарантовано рахують однаково.
+    """
+    if positions:
+        where: defaultdict[str, list[int]] = defaultdict(list)
+        n_tokens = 0
+        for n_tokens, term in enumerate(tokenize(text), start=1):
+            where[term].append(n_tokens - 1)
+        return n_tokens, [(t, len(p), p) for t, p in where.items()]
+    counts = Counter(tokenize(text))
+    return counts.total(), [(t, tf, ()) for t, tf in counts.items()]
+
+
+def document_meta(doc: Document) -> DocMeta:
+    return DocMeta(path=doc.doc_id, title=doc.title or extract_title(doc.text, doc.doc_id))
+
+
 @timed
 def build_index(
     docs: Iterable[Document],
@@ -281,26 +304,12 @@ def build_index(
     doc_meta: list[DocMeta] = []
 
     for doc_id, doc in enumerate(docs):
-        # 1) Статистика ПОТОЧНОГО документа: терм -> позиції (або лише частота)
-        where: defaultdict[str, list[int]] = defaultdict(list)
-        counts: Counter[str] = Counter()
-        n_tokens = 0
-        if positions:
-            for n_tokens, term in enumerate(tokenize(doc.text), start=1):
-                where[term].append(n_tokens - 1)
-        else:
-            counts.update(tokenize(doc.text))
-            n_tokens = counts.total()
-
+        # 1) Статистика ПОТОЧНОГО документа: терм -> (tf, позиції)
+        n_tokens, items = analyze_document(doc.text, positions)
         doc_lengths.append(n_tokens)
-        doc_meta.append(DocMeta(path=doc.doc_id, title=extract_title(doc.text, doc.doc_id)))
+        doc_meta.append(document_meta(doc))
 
         # 2) Flush: дописуємо постінги цього документа в кінець списків
-        items: Iterable[tuple[str, int, Sequence[int]]] = (
-            ((t, len(p), p) for t, p in where.items())
-            if positions
-            else ((t, tf, ()) for t, tf in counts.items())
-        )
         for term, tf, pos in items:
             if layout == "array":
                 array_postings[term].append(doc_id, tf, pos)

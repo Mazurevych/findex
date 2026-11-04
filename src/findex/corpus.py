@@ -7,7 +7,11 @@
   * каталог (рекурсивно, через Path.rglob) з файлами .txt / .rst / .md,
     у тому числі стиснутими .gz (розпаковуються «на льоту», без розпакування на диск);
   * файл JSON-lines (.jsonl або .jsonl.gz): один рядок = один документ
-    з полями "id" (необов'язкове) і "text".
+    з полями "id" (необов'язкове), "text" і "title" (необов'язкове) — так пише `findex crawl`.
+
+Лаба 5: `corpus_paths(root)` дає шляхи в тому самому порядку, що й `iter_documents`, а
+`documents_in(path, root)` — документи одного файлу. Так паралельна індексація ділить
+роботу за ШЛЯХАМИ (дешево передати в інший процес), а не за прочитаними текстами.
 """
 
 from __future__ import annotations
@@ -17,7 +21,7 @@ import json
 import logging
 from collections.abc import Iterator
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, TextIO, cast
 
 log = logging.getLogger(__name__)
 
@@ -25,9 +29,10 @@ TEXT_SUFFIXES = frozenset({".txt", ".rst", ".md"})
 
 
 class Document(NamedTuple):
-    doc_id: str  # стабільний ідентифікатор: відносний шлях (або id з JSONL)
+    doc_id: str  # стабільний ідентифікатор: відносний шлях (або id/URL з JSONL)
     path: Path  # файл, з якого прочитано документ
     text: str  # повний текст документа
+    title: str | None = None  # готовий заголовок (JSONL з краулера); інакше — з тексту
 
 
 def iter_documents(root: Path | str) -> Iterator[Document]:
@@ -39,47 +44,51 @@ def iter_documents(root: Path | str) -> Iterator[Document]:
     і читаємо з errors="replace" (некоректні байти -> U+FFFD).
     """
     root = Path(root)
-    if root.is_file():
-        if _is_jsonl(root):
-            yield from _iter_jsonl(root)
-        elif _is_text(root):
-            doc = _read_document(root, doc_id=root.name)
-            if doc is not None:
-                yield doc
-        else:
-            raise ValueError(f"Непідтримуваний тип файлу: {root}")
-        return
+    if root.is_file() and not (_is_jsonl(root) or _is_text(root)):
+        raise ValueError(f"Непідтримуваний тип файлу: {root}")
+    for path in corpus_paths(root):
+        yield from documents_in(path, root)
 
+
+def corpus_paths(root: Path | str) -> Iterator[Path]:
+    """Файли корпусу в порядку обходу (лінивий `rglob`). Файл-корпус — це він сам."""
+    root = Path(root)
+    if root.is_file():
+        yield root
+        return
     if not root.is_dir():
         raise FileNotFoundError(f"Корпус не знайдено: {root}")
-
     # rglob — генератор шляхів; файли відкриваються лише коли до них дійде черга.
     for path in root.rglob("*"):
-        if not path.is_file():
-            continue
-        if _is_jsonl(path):
-            yield from _iter_jsonl(path)
-        elif _is_text(path):
-            doc = _read_document(path, doc_id=path.relative_to(root).as_posix())
-            if doc is not None:
-                yield doc
+        if path.is_file() and (_is_jsonl(path) or _is_text(path)):
+            yield path
+
+
+def documents_in(path: Path, root: Path | str) -> Iterator[Document]:
+    """Документи одного файлу: текстовий файл — один документ, JSONL — по рядку."""
+    root = Path(root)
+    if _is_jsonl(path):
+        yield from _iter_jsonl(path)
+        return
+    doc_id = path.name if root.is_file() else path.relative_to(root).as_posix()
+    doc = _read_document(path, doc_id=doc_id)
+    if doc is not None:
+        yield doc
+
+
+def count_in(path: Path) -> int:
+    """Скільки документів дасть `documents_in(path)` — для текстового файлу 1, без читання."""
+    if _is_jsonl(path):
+        return sum(1 for _ in _iter_jsonl(path, quiet=True))
+    return 1
 
 
 def count_documents(root: Path | str) -> int:
     """Скільки документів віддасть iter_documents — без читання текстів (для прогрес-бару).
 
-    Для каталогу рахує лише шляхи; JSON-lines — рядки (це вже читання, але потокове).
+    Для каталогу рахує лише шляхи; JSON-lines — коректні рядки (потокове читання).
     """
-    root = Path(root)
-    paths = [root] if root.is_file() else (p for p in root.rglob("*") if p.is_file())
-    total = 0
-    for path in paths:
-        if _is_jsonl(path):
-            with _open_text(path, errors="replace") as f:
-                total += sum(1 for line in f if line.strip())
-        elif _is_text(path):
-            total += 1
-    return total
+    return sum(count_in(path) for path in corpus_paths(root))
 
 
 # --- допоміжні функції -------------------------------------------------------
@@ -101,10 +110,10 @@ def _is_jsonl(path: Path) -> bool:
     return _real_suffix(path) == ".jsonl"
 
 
-def _open_text(path: Path, errors: str = "strict"):
+def _open_text(path: Path, errors: str = "strict") -> TextIO:
     """Відкриває файл як текст UTF-8; .gz розпаковується потоково."""
     if path.suffix == ".gz":
-        return gzip.open(path, mode="rt", encoding="utf-8", errors=errors)
+        return cast(TextIO, gzip.open(path, mode="rt", encoding="utf-8", errors=errors))
     return path.open(encoding="utf-8", errors=errors)
 
 
@@ -122,17 +131,23 @@ def _read_document(path: Path, doc_id: str) -> Document | None:
     return Document(doc_id=doc_id, path=path, text=text)
 
 
-def _iter_jsonl(path: Path) -> Iterator[Document]:
+def _iter_jsonl(path: Path, *, quiet: bool = False) -> Iterator[Document]:
     # Файл — це ітератор рядків: у пам'яті завжди лише поточний рядок.
     with _open_text(path, errors="replace") as f:
         for lineno, line in enumerate(f, start=1):
             if not line.strip():
                 continue
             try:
-                record = json.loads(line)
+                record = cast(dict[str, object], json.loads(line))
                 text = record["text"]
+                if not isinstance(text, str):
+                    raise TypeError("поле text має бути рядком")
             except (json.JSONDecodeError, KeyError, TypeError) as exc:
-                log.warning("%s:%d: пропускаю некоректний рядок (%s)", path, lineno, exc)
+                if not quiet:
+                    log.warning("%s:%d: пропускаю некоректний рядок (%s)", path, lineno, exc)
                 continue
             doc_id = str(record.get("id", f"{path.name}:{lineno}"))
-            yield Document(doc_id=doc_id, path=path, text=text)
+            title = record.get("title")
+            yield Document(
+                doc_id=doc_id, path=path, text=text, title=title if isinstance(title, str) else None
+            )

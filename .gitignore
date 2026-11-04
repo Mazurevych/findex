@@ -23,3 +23,7 @@ wheels/
 .coverage
 .coverage.*
 htmlcov/
+
+# Краулер (лаба 6)
+crawl/
+crawl.log

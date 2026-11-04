@@ -12,9 +12,15 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from hypothesis import settings
 
 from findex.corpus import Document, iter_documents
 from findex.index import Index, Layout, build_index
+
+# Під покриттям і на повільних CI-машинах один приклад може перевищити стандартний
+# дедлайн Hypothesis (200 мс) — це не баг коду, а шум часу. Вимикаємо дедлайн.
+settings.register_profile("findex", deadline=None)
+settings.load_profile("findex")
 
 TEXTS: dict[str, str] = {
     "a-generators.txt": "Python generators are lazy. Generators yield values one at a time.",

@@ -60,7 +60,8 @@ def main() -> None:
             out = Path(tmp) / f"{layout}-{int(positions)}.{'pkl' if fmt == 'pickle' else 'bin'}"
             if key not in built:
                 cmd = [sys.executable, "-m", "findex.index", args.root, "--out", str(out)]
-                cmd += ["--layout", layout, "--format", fmt, "--json"]
+                cmd += ["--layout", layout, "--format", fmt, "--json", "--trace-memory"]
+                cmd += ["--executor", "serial"]  # лаба 2 міряє послідовну побудову
                 if positions:
                     cmd.append("--positions")
                 res = subprocess.run(cmd, check=True, capture_output=True, text=True)

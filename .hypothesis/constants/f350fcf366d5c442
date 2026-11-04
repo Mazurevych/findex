@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/typer/typer/core.py
+# hypothesis_version: 6.140.0
+
+[130, ' / ', '(dynamic)', ', ', '-', '.', '...', '/', ';', '; ', 'Aborted!', 'Arguments', 'COMMAND [ARGS]...', 'Command has no name.', 'Commands', 'Missing command.', 'Options', 'TYPER_USE_RICH', 'TyperArgument', 'TyperGroup', 'TyperOption', '[', '[OPTIONS]', '_', 'append', 'argument', 'count', 'default: {default}', 'env var: {var}', 'markdown', 'nt', 'obj', 'option', 'required', 'rich', 'show_default', 'store']

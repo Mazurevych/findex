@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/typer/typer/_click/_compat.py
+# hypothesis_version: 6.140.0
+
+[438, '-', 'O_BINARY', '_AtomicFile', 'a', 'ascii', 'b', 'buffer', 'cygwin', 'encoding', 'errors', 'ipykernel.', 'nt', 'r', 'read1', 'replace', 'seekable', 'stderr', 'stdin', 'stdout', 'strict', 'utf-8', 'w', 'win', 'x']

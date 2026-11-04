@@ -1,0 +1,4 @@
+# file: /home/claude/findex/src/findex/tokenize.py
+# hypothesis_version: 6.140.0
+
+["'", 'NFC', '[̀-ͯ]', "\\w+(?:'\\w+)*", '`', 'ʼ', '‘', '’']

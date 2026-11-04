@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/coveragepy/coverage/multiproc.py
+# hypothesis_version: 6.140.0
+
+['COVERAGE_RCFILE', '_coverage$patched', 'multiproc', 'rcfile', 'stowaway']

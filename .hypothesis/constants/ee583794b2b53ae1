@@ -1,0 +1,4 @@
+# file: /home/claude/findex/src/findex/store.py
+# hypothesis_version: 6.140.0
+
+[b'FINDEX', b'FINDEX03', b'\x80', ',', ':', '<Q', 'I', 'array', 'binary', 'byteorder', 'corpus_root', 'doc_lengths', 'doc_meta', 'layout', 'pickle', 'positions', 'rb', 'terms', 'utf-8', 'version', 'wb']

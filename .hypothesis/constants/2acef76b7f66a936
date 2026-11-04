@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/typer/typer/completion.py
+# hypothesis_version: 6.140.0
+
+['-', '--install-completion', '--show-completion', '_', '_{}_COMPLETE', 'complete', 'green', 'source']

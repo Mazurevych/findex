@@ -1,0 +1,4 @@
+# file: /home/claude/findex/src/findex/query.py
+# hypothesis_version: 6.140.0
+
+['"', '(', ')', 'AND', 'EOF', 'NOT', 'OR', 'PHRASE', 'WORD', 'lp', 'merge', 'phrase', 'quote', 'rp', 'word', 'порожній запит']

@@ -1,0 +1,4 @@
+# file: /home/claude/findex/src/findex/stats.py
+# hypothesis_version: 6.140.0
+
+[1024, '--json', '--limit', '--mode', '--no-trace', '--top', 'B', 'GiB', 'KiB', 'MiB', '__main__', 'documents', 'eager', 'elapsed_s', 'lazy', 'lazy або eager', 'mode', 'peak_bytes', 'root', 'store_true', 'tokens', 'top', 'unreachable', 'vocabulary']

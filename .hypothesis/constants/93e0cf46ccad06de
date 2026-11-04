@@ -1,0 +1,4 @@
+# file: /home/claude/findex/src/findex/search.py
+# hypothesis_version: 6.140.0
+
+[0.0, 256, 1024, 'ENGINES', 'Engine', 'SearchResult', '__main__', 'difference', 'evaluate', 'intersect', 'matching_doc_ids', 'merge', 'query_terms', 'search', 'set_difference', 'set_intersect', 'set_union', 'union']

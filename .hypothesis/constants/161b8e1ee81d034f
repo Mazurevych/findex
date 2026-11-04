@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/rich/rich/filesize.py
+# hypothesis_version: 6.140.0
+
+[1000, '1 byte', 'EB', 'GB', 'MB', 'PB', 'TB', 'YB', 'ZB', 'decimal', 'kB']

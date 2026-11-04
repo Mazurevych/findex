@@ -1,0 +1,4 @@
+# file: /home/claude/findex/src/findex/snippets.py
+# hypothesis_version: 6.140.0
+
+["'", 'NFC', '\\s+', '`', 'replace', 'utf-8', '«', '»', 'ʼ', '‘', '’', '…']

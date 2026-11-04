@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/typer/typer/models.py
+# hypothesis_version: 6.140.0
+
+[b'-', '-', 'CommandFunctionType', 'CompletionItem', 'DefaultType', 'Typer', 'TyperCommand', 'TyperGroup', '[OPTIONS]', 'directory', 'file', 'os.PathLike[str]', 'path', 'strict']

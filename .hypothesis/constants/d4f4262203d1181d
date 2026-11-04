@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/python-sortedcontainers/src/sortedcontainers/sortedlist.py
+# hypothesis_version: 6.140.0
+
+[1000, '!=', '<', '<=', '==', '>', '>=', 'equal to', 'greater than', 'index', 'keys', 'len', 'len_index', 'len_keys', 'len_lists', 'len_maxes', 'less than', 'lists', 'load', 'maxes', 'not equal to', 'offset']

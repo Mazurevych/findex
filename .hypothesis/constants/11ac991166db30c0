@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/typer/typer/_click/utils.py
+# hypothesis_version: 6.140.0
+
+[b'\n', '\x08', '-', '.', '...', 'APPDATA', 'LOCALAPPDATA', 'LazyFile', 'P', 'R', 'XDG_CONFIG_HOME', '[\\x00-\\x1f\\x7f-\\x9f]', '__main__', '__package__', 'darwin', 'nt', 'r', 'replace', 'stderr', 'stdin', 'stdout', 'strict', 'surrogateescape', 'utf-8', '~', '~/.config']

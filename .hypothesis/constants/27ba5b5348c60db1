@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/coveragepy/coverage/plugin_support.py
+# hypothesis_version: 6.140.0
+
+[':\n', 'coverage_init', 'plugin']

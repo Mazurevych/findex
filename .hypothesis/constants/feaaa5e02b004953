@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/pygments/pygments/formatters/__init__.py
+# hypothesis_version: 6.140.0
+
+['CustomFormatter', '__all__', 'get_all_formatters', 'rb']

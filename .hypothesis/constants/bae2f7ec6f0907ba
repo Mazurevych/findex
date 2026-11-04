@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/rich/rich/align.py
+# hypothesis_version: 6.140.0
+
+['Align', 'Console', 'ConsoleOptions', 'RenderResult', 'RenderableType', '__main__', "align='center'", "align='left'", "align='right'", 'bottom', 'center', 'left', 'middle', 'on dark_blue', 'on red', 'right', 'top']

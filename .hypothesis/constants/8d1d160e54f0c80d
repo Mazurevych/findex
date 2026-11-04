@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/coveragepy/coverage/env.py
+# hypothesis_version: 6.140.0
+
+['+', 'COVERAGE_COVERAGE', 'COVERAGE_TESTING', 'CPython', 'PYBEHAVIOR', 'PyPy', 'Py_GIL_DISABLED', 'True', '_', '_is_gil_enabled', 'alpha', 'darwin', 'debug_info', 'linux', 'monitoring', 'win32']

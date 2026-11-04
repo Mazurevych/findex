@@ -65,6 +65,23 @@ def iter_documents(root: Path | str) -> Iterator[Document]:
                 yield doc
 
 
+def count_documents(root: Path | str) -> int:
+    """Скільки документів віддасть iter_documents — без читання текстів (для прогрес-бару).
+
+    Для каталогу рахує лише шляхи; JSON-lines — рядки (це вже читання, але потокове).
+    """
+    root = Path(root)
+    paths = [root] if root.is_file() else (p for p in root.rglob("*") if p.is_file())
+    total = 0
+    for path in paths:
+        if _is_jsonl(path):
+            with _open_text(path, errors="replace") as f:
+                total += sum(1 for line in f if line.strip())
+        elif _is_text(path):
+            total += 1
+    return total
+
+
 # --- допоміжні функції -------------------------------------------------------
 
 

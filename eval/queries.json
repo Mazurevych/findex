@@ -1,0 +1,64 @@
+[
+  {
+    "query": "\"pattern matching\"",
+    "relevant": ["peps/pep-0634.rst", "peps/pep-0635.rst", "peps/pep-0636.rst", "peps/pep-0622.rst",
+                 "peps/pep-0642.rst", "peps/pep-0653.rst", "python-docs/whatsnew/3.10.rst",
+                 "python-docs/reference/compound_stmts.rst", "python-docs/tutorial/controlflow.rst"]
+  },
+  {
+    "query": "f-string",
+    "relevant": ["peps/pep-0498.rst", "peps/pep-0701.rst", "peps/pep-0501.rst", "peps/pep-0750.rst",
+                 "python-docs/reference/lexical_analysis.rst", "python-docs/tutorial/inputoutput.rst",
+                 "python-docs/library/string.rst", "python-docs/whatsnew/3.12.rst",
+                 "python-docs/whatsnew/3.6.rst"]
+  },
+  {
+    "query": "type hints",
+    "relevant": ["peps/pep-0484.rst", "peps/pep-0483.rst", "peps/pep-0482.rst", "peps/pep-0526.rst",
+                 "peps/pep-0585.rst", "peps/pep-0604.rst", "peps/pep-0563.rst", "peps/pep-0649.rst",
+                 "peps/pep-3107.rst", "python-docs/library/typing.rst",
+                 "python-docs/howto/annotations.rst"]
+  },
+  {
+    "query": "async await coroutine",
+    "relevant": ["peps/pep-0492.rst", "peps/pep-0525.rst", "peps/pep-0530.rst", "peps/pep-3156.rst",
+                 "python-docs/library/asyncio-task.rst", "python-docs/reference/compound_stmts.rst",
+                 "python-docs/reference/expressions.rst", "python-docs/whatsnew/3.5.rst"]
+  },
+  {
+    "query": "\"global interpreter lock\"",
+    "relevant": ["peps/pep-0703.rst", "peps/pep-0779.rst", "peps/pep-0684.rst", "peps/pep-0554.rst",
+                 "peps/pep-0734.rst", "peps/pep-0311.rst", "python-docs/howto/free-threading-python.rst",
+                 "python-docs/howto/free-threading-extensions.rst", "python-docs/c-api/init.rst",
+                 "python-docs/glossary.rst"]
+  },
+  {
+    "query": "dataclass",
+    "relevant": ["peps/pep-0557.rst", "python-docs/library/dataclasses.rst", "peps/pep-0681.rst",
+                 "python-docs/whatsnew/3.7.rst"]
+  },
+  {
+    "query": "\"context manager\"",
+    "relevant": ["peps/pep-0343.rst", "peps/pep-0310.rst", "peps/pep-0340.rst", "peps/pep-0346.rst",
+                 "peps/pep-0377.rst", "python-docs/library/contextlib.rst",
+                 "python-docs/reference/compound_stmts.rst", "python-docs/reference/datamodel.rst",
+                 "python-docs/library/stdtypes.rst"]
+  },
+  {
+    "query": "unicode normalization",
+    "relevant": ["python-docs/howto/unicode.rst", "python-docs/library/unicodedata.rst",
+                 "peps/pep-3131.rst", "peps/pep-0672.rst", "python-docs/reference/lexical_analysis.rst"]
+  },
+  {
+    "query": "\"virtual environment\"",
+    "relevant": ["peps/pep-0405.rst", "python-docs/library/venv.rst", "python-docs/tutorial/venv.rst",
+                 "peps/pep-0668.rst", "peps/pep-0582.rst", "peps/pep-0704.rst",
+                 "python-docs/library/site.rst"]
+  },
+  {
+    "query": "\"exception groups\"",
+    "relevant": ["peps/pep-0654.rst", "peps/pep-0678.rst", "peps/pep-0785.rst",
+                 "python-docs/builtins/exceptions.rst", "python-docs/tutorial/errors.rst",
+                 "python-docs/reference/compound_stmts.rst", "python-docs/whatsnew/3.11.rst"]
+  }
+]

@@ -1,0 +1,4 @@
+# file: /home/claude/findex/src/findex/__init__.py
+# hypothesis_version: 6.140.0
+
+['Document', 'iter_documents', 'tokenize']

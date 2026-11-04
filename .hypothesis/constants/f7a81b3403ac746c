@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/coveragepy/coverage/regions.py
+# hypothesis_version: 6.140.0
+
+['.', 'body', 'cases', 'class', 'finalbody', 'function', 'handlers', 'orelse']

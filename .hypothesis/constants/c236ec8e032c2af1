@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/coveragepy/coverage/plugin.py
+# hypothesis_version: 6.140.0
+
+['file_reporter', 'lines', 'source_filename', 'txt', 'utf-8']

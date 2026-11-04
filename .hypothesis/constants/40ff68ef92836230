@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/typer/typer/testing.py
+# hypothesis_version: 6.140.0
+
+['<stderr>', '<stdin>', '<stdout>', 'CliRunner', 'ReadableBuffer', 'backslashreplace', 'int | Any | None', 'okay', 'prog_name', 'r', 'replace', 'root', 'utf-8', 'w']

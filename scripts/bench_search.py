@@ -28,7 +28,7 @@ def main() -> None:
     args = p.parse_args()
 
     ix = load(args.index)
-    by_df = sorted(ix.postings, key=lambda t: (ix.df(t), t))
+    by_df = sorted(ix, key=lambda t: (ix.df(t), t))
     common = by_df[-2:][::-1]
     # рідкісні: два випадкові (seed фіксований) слова з мінімальним df — лише літери,
     # 6–10 символів, щоб не потрапили артефакти розмітки на кшталт «0'__» чи «aaaaa»

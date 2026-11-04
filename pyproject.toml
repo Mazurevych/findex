@@ -1,20 +1,37 @@
 [project]
 name = "findex"
-version = "0.1.0"
-description = "Власна пошукова система, яку будуємо протягом курсу Python (лаби 1–8)"
+version = "0.4.0"
+description = "Навчальна пошукова система: інвертований індекс, BM25, мова запитів, CLI"
 readme = "README.md"
-authors = [
-    { name = "Yakiv Mazurevych" }
+authors = [{ name = "Yakiv Mazurevych" }]
+requires-python = ">=3.12"
+keywords = ["search", "inverted-index", "bm25", "education"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Environment :: Console",
+    "Topic :: Text Processing :: Indexing",
+    "Typing :: Typed",
 ]
-requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "typer>=0.15",
+    "rich>=13.8",
+]
+
+[project.urls]
+Repository = "https://github.com/Mazurevych/findex"
+Course = "https://github.com/rmalkevy/Programming-Practice-Projects/tree/main/courses/python"
 
 [project.scripts]
-findex-stats = "findex.stats:main"
+findex = "findex.cli:app"
 
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "pytest-cov>=5",
+    "hypothesis>=6.100",
+    "pyright>=1.1.400",
     "ruff>=0.6",
 ]
 
@@ -24,10 +41,26 @@ build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM"]
 
+[tool.coverage.run]
+source = ["findex"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_also = ["if __name__ == .__main__.:", "raise AssertionError", "\\.\\.\\.$"]
+
+[tool.pyright]
+include = ["src"]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = ["--strict-markers"]
+markers = ["slow: довгі тести (> 1 с); пропустити: -m 'not slow'"]

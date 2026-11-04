@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/typer/typer/_click/shell_completion.py
+# hypothesis_version: 6.140.0
+
+['-', '--', '=', 'ShellCompleteType', '\\W*', '_', '_info', 'help', 'plain', 'resilient_parsing', 'type', 'type[ShellComplete]', 'value']

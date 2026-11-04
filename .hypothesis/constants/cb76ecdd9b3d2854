@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/typer/typer/_click/exceptions.py
+# hypothesis_version: 6.140.0
+
+[' / ', ', ', 'Context', 'Missing argument', 'Missing option', 'Missing parameter', 'Parameter', 'argument', 'option', 'parameter', 'unknown error']

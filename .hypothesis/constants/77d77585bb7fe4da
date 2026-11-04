@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/coveragepy/coverage/bytecode.py
+# hypothesis_version: 6.140.0
+
+['<string>', 'CACHE', 'EXTENDED_ARG', 'JUMP_BACKWARD', 'JUMP_FORWARD', 'RERAISE', 'RETURN_GENERATOR', 'RETURN_VALUE', '__annotate__', 'exec']

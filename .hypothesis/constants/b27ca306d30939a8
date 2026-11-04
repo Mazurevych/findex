@@ -1,0 +1,4 @@
+# file: /tmp/claude-0/deps/typer/typer/_click/parser.py
+# hypothesis_version: 6.140.0
+
+['-', '--', '=', 'Context', 'CoreArgument', 'CoreOption', 'CoreParameter', 'V', '_ParsingState', 'an argument.', 'append', 'append_const', 'count', 'store', 'store_const']

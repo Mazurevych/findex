@@ -46,11 +46,13 @@ def oha(url: str, concurrency: int, seconds: int) -> dict[str, Any]:
     codes = data.get("statusCodeDistribution", {})
     return {
         "rps": data["summary"]["requestsPerSec"],
-        "p50": pct["p50"] * 1000,
-        "p95": pct["p95"] * 1000,
-        "p99": pct["p99"] * 1000,
+        "p50": (pct.get("p50") or 0.0) * 1000,
+        "p95": (pct.get("p95") or 0.0) * 1000,
+        "p99": (pct.get("p99") or 0.0) * 1000,
         "ok": int(codes.get("200", 0)),
         "total": sum(int(v) for v in codes.values()),
+        "codes": {str(k): int(v) for k, v in codes.items()},
+        "errors": {str(k): int(v) for k, v in data.get("errorDistribution", {}).items()},
     }
 
 
@@ -159,6 +161,8 @@ def main() -> None:
             {"target": "deployed", "concurrency": 20, **oha(base + ROUTE, 20, args.seconds)}
         )
         print(rows[-1])
+        print("Коди відповідей:", rows[-1]["codes"], " Помилки клієнта:", rows[-1]["errors"])
+        set_live_url(base)
     save(rows)
 
 

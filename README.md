@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Mazurevych/findex/actions/workflows/ci.yml/badge.svg)](https://github.com/Mazurevych/findex/actions/workflows/ci.yml)
 
-**Живий сайт:** <!-- live-url -->_ще не розгорнуто_<!-- /live-url -->
+**Живий сайт:** <!-- live-url -->[https://findex-88t4.onrender.com](https://findex-88t4.onrender.com)<!-- /live-url -->
 
 Навчальна пошукова система, яку я будую протягом курсу «Python» (8 лабораторних).
 Автор: Мазуревич Яків, гр. БІ-125-23-3-Б, КАІ.

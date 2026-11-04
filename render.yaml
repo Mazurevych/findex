@@ -9,6 +9,13 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     autoDeploy: true
+    buildFilter:  # перебудовувати лише коли змінився код, а не README чи результати замірів
+      paths:
+        - src/**
+        - Dockerfile
+        - pyproject.toml
+        - uv.lock
+        - scripts/get_corpus.py
     envVars:
       - key: INDEX_PATH
         value: /app/index.bin

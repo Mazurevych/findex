@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/rich/rich/_unicode_data/__init__.py
-# hypothesis_version: 6.140.0
-
-['-', '.', 'UNICODE_VERSION', 'auto', 'latest', 'rich._unicode_data', 'tuple[int, int, int]']

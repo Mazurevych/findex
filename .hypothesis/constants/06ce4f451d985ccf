@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/python-sortedcontainers/src/sortedcontainers/sortedset.py
-# hypothesis_version: 6.140.0
-
-['!=', '<', '<=', '==', '>', '>=', '_set', 'a proper subset of', 'a proper superset of', 'a subset of', 'a superset of', 'equal to', 'not equal to']

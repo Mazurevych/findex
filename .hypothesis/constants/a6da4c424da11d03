@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/coveragepy/coverage/pytracer.py
-# hypothesis_version: 6.140.0
-
-[' / ', ' {}', ' | ', '---\nX', '/', '/tmp/debug_trace.txt', '>', '???', 'Empty stack!', 'PUSH_EXC_INFO', 'RESUME', 'RETURN_VALUE', 'YIELD_FROM', 'YIELD_VALUE', 'a', 'call', 'co', 'f_lasti', 'in_atexit', 'line', 'return', 'trace-changed', 'utf-8']

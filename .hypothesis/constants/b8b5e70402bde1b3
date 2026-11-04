@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/typer/typer/_click/types.py
-# hypothesis_version: 6.140.0
-
-[' clamped', '%Y-%m-%d', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', ', ', '-', '0', '1', '<', '<=', '>', '>=', 'BOOL', 'CompletionItem', 'Context', 'DateTime', 'FLOAT', 'INT', 'IO[Any]', 'ParamTypeValue', 'Parameter', 'STRING', 'UUID', '__name__', 'boolean', 'datetime', 'f', 'false', 'file', 'filename', 'float', 'float range', 'function', 'int', 'int range', 'n', 'no', 'off', 'on', 'r', 'read', 'replace', 'str', 'strict', 't', 'true', 'utf-8', 'uuid', 'w', 'write', 'y', 'yes']

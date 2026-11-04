@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/coveragepy/coverage/core.py
-# hypothesis_version: 6.140.0
-
-['COVERAGE_CORE', '__file__', 'ctrace', 'eventlet', 'gevent', 'greenlet', 'in core.py', 'no-ctracer', 'no-sysmon', 'pytrace', 'sysmon', 'unknown']

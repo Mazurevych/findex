@@ -17,3 +17,9 @@ wheels/
 # Файли індексу (будуються командою findex.index)
 *.bin
 *.pkl
+
+# Тести і покриття
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/

@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/coveragepy/coverage/sqlitedb.py
-# hypothesis_version: 6.140.0
-
-[':', '?mode=ro', '?mode=ro&immutable=1', 'REGEXP', 'file:', 'sql', 'sqldata', 'sqlite_errorname']

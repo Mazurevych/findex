@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/coveragepy/coverage/tomlconfig.py
-# hypothesis_version: 6.140.0
-
-['.', 'TWant', 'a boolean', 'a float', 'a list', 'a list of strings', 'a string', 'an integer', 'false', 'tool.coverage.', 'true', 'utf-8']

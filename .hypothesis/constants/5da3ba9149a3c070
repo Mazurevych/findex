@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/typer/typer/colors.py
-# hypothesis_version: 6.140.0
-
-['black', 'blue', 'bright_black', 'bright_blue', 'bright_cyan', 'bright_green', 'bright_magenta', 'bright_red', 'bright_white', 'bright_yellow', 'cyan', 'green', 'magenta', 'red', 'reset', 'white', 'yellow']

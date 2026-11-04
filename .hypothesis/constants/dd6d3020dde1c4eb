@@ -1,4 +1,0 @@
-# file: /home/claude/findex/src/findex/scoring.py
-# hypothesis_version: 6.140.0
-
-[0.0, 0.5, 0.75, 1.5, 'bm25', 'tfidf']

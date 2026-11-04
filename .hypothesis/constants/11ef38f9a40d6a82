@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/typer/typer/_click/core.py
-# hypothesis_version: 6.140.0
-
-[' / ', '(DEPRECATED)', '-', '--help', '...', '<', '>', 'Callable[..., Any]', 'Command', 'CompletionItem', 'Context', 'F', 'Parameter', 'TyperOption', 'V', '[OPTIONS]', '_', 'inf', 'list[CompletionItem]', 'meta', 'parameter', 'red']

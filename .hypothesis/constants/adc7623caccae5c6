@@ -1,4 +1,0 @@
-# file: /home/claude/findex/src/findex/corpus.py
-# hypothesis_version: 6.140.0
-
-['*', '.gz', '.jsonl', '.md', '.rst', '.txt', 'id', 'replace', 'rt', 'strict', 'text', 'utf-8']

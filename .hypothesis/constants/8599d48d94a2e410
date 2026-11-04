@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/shellingham/src/shellingham/_core.py
-# hypothesis_version: 6.140.0
-
-['ash', 'bash', 'cmd', 'csh', 'dash', 'elvish', 'fish', 'ksh', 'nu', 'powershell', 'pwsh', 'sh', 'tcsh', 'xonsh', 'zsh']

@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/typer/typer/_completion_classes.py
-# hypothesis_version: 6.140.0
-
-['"', '""', '$', "'", "''", '--norc', '-c', '4', ':', 'COMP_CWORD', 'COMP_WORDS', '\\$', '\\\\:', '\\`', '\\s', '^(\\d+)\\.(\\d+)\\.\\d+', '_TYPER_COMPLETE_ARGS', '_files', '`', 'autocomplete_var', 'bash', 'complete_func', 'get-args', 'is-args', 'prog_name', 'rich']

@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/coveragepy/coverage/misc.py
-# hypothesis_version: 6.140.0
-
-[b'.', '$', '%Y-%m-%d %H:%M %z', '(\\d+)', '.py', '?', 'Class', 'Plugin', 'SortableItem', 'T', '__', 'defval', 'dollar', 'isatty', 's', 'sha3_256', 'strict', 'utf-8', 'word1', 'word2', '|']

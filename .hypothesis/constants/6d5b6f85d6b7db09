@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/typer/typer/_types.py
-# hypothesis_version: 6.140.0
-
-[',\n\t', ', ', 'ParamTypeValue', 'choice', 'option', '|']

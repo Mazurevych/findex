@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/coveragepy/coverage/parser.py
-# hypothesis_version: 6.140.0
-
-[' or ', '%10s %5s %-20r %r', '([{', ')]}', '0', ':', '<code>', 'AnnAssign', 'Assert', 'Assign', 'AugAssign', 'COVERAGE_AST_DUMP', 'COVERAGE_TRACK_ARCS', 'Delete', 'Expr', 'False', 'Global', 'Import', 'ImportFrom', 'None', 'Nonlocal', 'Pass', 'True', '__debug__', 'exit the module', 'lineno']

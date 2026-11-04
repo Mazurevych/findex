@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/coveragepy/coverage/sqldata.py
-# hypothesis_version: 6.140.0
-
-[b'01', b'z', ' AND context_id IN (', ' or ', '%Y-%m-%d %H:%M:%S', ')', ', ', '.', '.*', '.H', '.coverage', ':memory:', '?', '???', 'CoverageData', 'DEFERRED', 'Erasing data file', 'Finishing data file', 'Initing data file', 'Opening data file', 'P', 'PRAGMA temp_store', 'R', 'S', '[/\\\\]', '_', '_filename', 'argv', 'cant-combine', 'context REGEXP ?', 'dataio', 'dataop', 'dataop2', 'file:', 'has_arcs', 'hash', 'lock', 'map_path', 'process', 'sqlite3_temp_store', 'sys_argv', 'utf-8', 'version', 'when']

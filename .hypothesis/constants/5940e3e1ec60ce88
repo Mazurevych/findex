@@ -1,4 +1,0 @@
-# file: /tmp/claude-0/deps/pygments/pygments/formatter.py
-# hypothesis_version: 6.140.0
-
-['Formatter', 'chardet', 'default', 'encoding', 'full', 'guess', 'outencoding', 'style', 'title', 'utf-8']

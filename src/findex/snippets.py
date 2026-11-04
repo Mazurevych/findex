@@ -25,6 +25,12 @@ log = logging.getLogger(__name__)
 
 _APOSTROPHES = str.maketrans({"’": "'", "ʼ": "'", "‘": "'", "`": "'"})
 _SPACES = re.compile(r"\s+")
+_RULES = re.compile(r"[=\-~^*#+`]{4,}")  # підкреслення заголовків rST: ===== ----- ~~~~~
+
+
+def _clean(text: str) -> str:
+    return _SPACES.sub(" ", _RULES.sub(" ", text))
+
 
 type Segment = tuple[str, bool]  # (текст, чи підсвічувати)
 
@@ -59,7 +65,7 @@ def make_snippet(text: str, terms: Collection[str], radius: int = 80) -> Snippet
         if (term := normalize(m.group())) in wanted
     ]
     if not hits:
-        return Snippet(((_SPACES.sub(" ", original[: 2 * radius]), False),), False, True)
+        return Snippet(((_clean(original[: 2 * radius]), False),), False, True)
 
     starts = [h[0] for h in hits]
     best_i, best_count = 0, 0
@@ -85,11 +91,11 @@ def make_snippet(text: str, terms: Collection[str], radius: int = 80) -> Snippet
         if start < lo or end > hi:
             continue
         if start > cursor:
-            segments.append((_SPACES.sub(" ", original[cursor:start]), False))
+            segments.append((_clean(original[cursor:start]), False))
         segments.append((original[start:end], True))
         cursor = end
     if cursor < hi:
-        segments.append((_SPACES.sub(" ", original[cursor:hi]), False))
+        segments.append((_clean(original[cursor:hi]), False))
     return Snippet(tuple(segments), lo > 0, hi < len(prepared))
 
 
@@ -105,3 +111,37 @@ def snippet_for(index: Index, doc_id: int, terms: Collection[str], radius: int =
         log.warning("%s: не вдалося прочитати для сніпета (%s)", path, exc)
         return EMPTY
     return make_snippet(text, terms, radius)
+
+
+def highlight_segments(text: str, terms: Collection[str]) -> tuple[Segment, ...]:
+    """Увесь текст на сегменти «звичайний / підсвічений» — для перегляду документа.
+
+    На відміну від сніпета, пробіли й переноси рядків зберігаються.
+    """
+    wanted = set(terms)
+    original = unicodedata.normalize("NFC", text)
+    prepared = original.translate(_APOSTROPHES)
+    segments: list[Segment] = []
+    cursor = 0
+    if wanted:
+        for m in WORD_RE.finditer(prepared):
+            if normalize(m.group()) in wanted:
+                if m.start() > cursor:
+                    segments.append((original[cursor : m.start()], False))
+                segments.append((original[m.start() : m.end()], True))
+                cursor = m.end()
+    if cursor < len(original):
+        segments.append((original[cursor:], False))
+    return tuple(segments)
+
+
+def read_document(index: Index, doc_id: int) -> str | None:
+    """Текст документа з корпусу (або None, якщо файлу немає — напр. сторінка з краулера)."""
+    path = index.document_path(doc_id)
+    if path is None or not path.is_file():
+        return None
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        log.warning("%s: не вдалося прочитати (%s)", path, exc)
+        return None

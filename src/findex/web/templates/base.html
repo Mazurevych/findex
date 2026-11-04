@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block page_title %}{{ title }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='13' cy='13' r='8' fill='none' stroke='%232f5ce0' stroke-width='3'/><path d='M19 19l8 8' stroke='%232f5ce0' stroke-width='3' stroke-linecap='round'/></svg>">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/">find<span>ex</span></a>
+    <form class="search" action="/" method="get" role="search">
+      <input type="search" name="q" value="{{ q }}" placeholder='Шукати в документації Python і PEP: asyncio NOT threading, "type hints"…' aria-label="Запит" autocomplete="off" {% if not q %}autofocus{% endif %}>
+      <select name="scorer" aria-label="Ранжування">
+        <option value="bm25" {% if scorer == 'bm25' %}selected{% endif %}>BM25</option>
+        <option value="tfidf" {% if scorer == 'tfidf' %}selected{% endif %}>TF-IDF</option>
+      </select>
+      <button type="submit">Шукати</button>
+    </form>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    findex — навчальна пошукова система, курс Python, КАІ ·
+    <a href="/docs">API</a> · <a href="/stats">stats</a> ·
+    <a href="https://github.com/Mazurevych/findex">GitHub</a>
+  </footer>
+</body>
+</html>

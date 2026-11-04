@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block page_title %}{% if q %}{{ q }} — {% endif %}{{ title }}{% endblock %}
+{% block content %}
+{% if index is none %}
+  <p class="notice error">Індекс не завантажено. Перевірте змінну середовища <code>INDEX_PATH</code>.</p>
+{% elif error %}
+  <p class="notice error">Помилка в запиті: {{ error }}</p>
+{% elif result %}
+  <p class="meta">
+    Знайдено <b>{{ "{:,}".format(result.total).replace(",", " ") }}</b>
+    {% if result.total %}· сторінка {{ page }} з {{ result.pages }}{% endif %}
+    · {{ "%.1f"|format(result.took_ms) }} мс · {{ scorer|upper }}
+  </p>
+  {% if not result.hits %}
+    <p class="notice">Нічого не знайдено. Спробуйте менше слів або <code>OR</code>.</p>
+  {% endif %}
+  <ol class="results" start="{{ (page - 1) * k + 1 }}">
+    {% for r, snip in result.hits %}
+    <li>
+      <a class="title" href="/doc/{{ r.doc_id }}?q={{ q|urlencode }}">{{ r.title }}</a>
+      <div class="path">{{ r.path }} <span class="score">{{ "%.2f"|format(r.score) }}</span></div>
+      <p class="snippet">{% if snip.starts_mid %}…{% endif %}{% for text, hit in snip.segments %}{% if hit %}<mark>{{ text }}</mark>{% else %}{{ text }}{% endif %}{% endfor %}{% if snip.ends_mid %}…{% endif %}</p>
+    </li>
+    {% endfor %}
+  </ol>
+  {% if result.pages > 1 %}
+  <nav class="pager" aria-label="Сторінки">
+    {% set base = "/?q=" ~ (q|urlencode) ~ "&scorer=" ~ scorer ~ "&k=" ~ k %}
+    {% if page > 1 %}<a href="{{ base }}&page={{ page - 1 }}">← Попередня</a>{% endif %}
+    {% for p in range([1, page - 3]|max, [result.pages, page + 3]|min + 1) %}
+      {% if p == page %}<span class="current">{{ p }}</span>{% else %}<a href="{{ base }}&page={{ p }}">{{ p }}</a>{% endif %}
+    {% endfor %}
+    {% if page < result.pages %}<a href="{{ base }}&page={{ page + 1 }}">Наступна →</a>{% endif %}
+  </nav>
+  {% endif %}
+{% else %}
+  <section class="hero">
+    <h1>Пошук у документації Python і PEP</h1>
+    <p>{{ "{:,}".format(index.num_docs).replace(",", " ") }} документів · {{ "{:,}".format(index|length).replace(",", " ") }} термів · BM25</p>
+    <p class="examples">Спробуйте:
+      <a href='/?q=%22pattern+matching%22'>"pattern matching"</a> ·
+      <a href='/?q=asyncio+NOT+threading'>asyncio NOT threading</a> ·
+      <a href='/?q=%28dataclass+OR+namedtuple%29+slots'>(dataclass OR namedtuple) slots</a> ·
+      <a href='/?q=%22global+interpreter+lock%22'>"global interpreter lock"</a>
+    </p>
+    <p class="hint">Слова через пробіл — усі разом (AND). Також <code>OR</code>, <code>NOT</code>, дужки й <code>"фрази в лапках"</code>.</p>
+  </section>
+{% endif %}
+{% endblock %}

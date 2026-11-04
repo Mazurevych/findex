@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block page_title %}{{ meta.title }} — {{ title }}{% endblock %}
+{% block content %}
+<article class="document">
+  <p class="back">{% if q %}<a href="/?q={{ q|urlencode }}">← до результатів «{{ q }}»</a>{% else %}<a href="/">← на головну</a>{% endif %}</p>
+  <h1>{{ meta.title }}</h1>
+  <p class="path">{{ meta.path }} · {{ "{:,}".format(length).replace(",", " ") }} токенів · doc_id {{ doc_id }}
+    · <a href="/docs/{{ doc_id }}">JSON</a></p>
+  {% if segments is none %}
+    <p class="notice">Текст документа недоступний на сервері (наприклад, сторінка з краулера).</p>
+  {% else %}
+    <pre class="text">{% for text, hit in segments %}{% if hit %}<mark>{{ text }}</mark>{% else %}{{ text }}{% endif %}{% endfor %}</pre>
+  {% endif %}
+</article>
+{% endblock %}

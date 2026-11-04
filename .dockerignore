@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+.hypothesis
+.pytest_cache
+.ruff_cache
+.coverage
+__pycache__
+data
+crawl
+dist
+docs
+tests
+*.bin
+*.pkl
+*.log

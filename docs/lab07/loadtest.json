@@ -1,0 +1,32 @@
+{
+ "local, 1 worker, `async def`": {
+  "target": "local, 1 worker, `async def`",
+  "concurrency": 50,
+  "rps": 13.33105578377553,
+  "p50": 4727.817983999999,
+  "p95": 4913.93359,
+  "p99": 5039.011706,
+  "ok": 150,
+  "total": 150
+ },
+ "local, 1 worker, `def`": {
+  "target": "local, 1 worker, `def`",
+  "concurrency": 50,
+  "rps": 13.331156968633575,
+  "p50": 4597.621746,
+  "p95": 5314.415173,
+  "p99": 5346.956923,
+  "ok": 150,
+  "total": 150
+ },
+ "local, 4 workers": {
+  "target": "local, 4 workers",
+  "concurrency": 50,
+  "rps": 21.728918476303427,
+  "p50": 3026.256537,
+  "p95": 4756.414436,
+  "p99": 4856.228109,
+  "ok": 276,
+  "total": 276
+ }
+}

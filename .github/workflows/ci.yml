@@ -44,3 +44,27 @@ jobs:
         with:
           name: dist
           path: dist/
+
+  docker:
+    name: docker image + /health
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (corpus + index inside the image)
+        run: docker build -t findex .
+      - name: Run and probe
+        run: |
+          docker run -d --name findex -p 8000:8000 findex
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8000/health; then break; fi
+            sleep 1
+          done
+          echo
+          curl -fsS "http://127.0.0.1:8000/search?q=%22pattern+matching%22&k=3" | head -c 600
+          echo
+          curl -fsS http://127.0.0.1:8000/stats
+          echo
+          curl -fsS http://127.0.0.1:8000/ | grep -q "findex"
+          test "$(docker inspect -f '{{.Config.User}}' findex)" = "findex"   # не root
+          docker logs findex | tail -20

@@ -530,6 +530,51 @@ def crawl_cmd(
     )
 
 
+# --- findex serve ----------------------------------------------------------------
+
+
+@app.command("serve")
+def serve_cmd(
+    index_path: Annotated[
+        Path | None,
+        typer.Option("--index", help="файл індексу [змінна INDEX_PATH або index.bin]"),
+    ] = None,
+    host: Annotated[str, typer.Option(help="адреса; 0.0.0.0 — для Docker")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(min=1, max=65535, help="порт")] = 8000,
+    workers: Annotated[int, typer.Option(min=1, help="процесів uvicorn")] = 1,
+    handler: Annotated[
+        str | None, typer.Option(help="sync (def) або async (async def) для /search")
+    ] = None,
+) -> None:
+    """Запускає вебпошук (FastAPI + uvicorn): сторінка /, API /search, документація /docs."""
+    import os
+
+    import uvicorn
+
+    from findex.web.app import configure_logging
+
+    # Налаштування йдуть через змінні середовища: так їх отримає і кожен процес-робітник
+    # uvicorn (--workers N запускає N окремих процесів, кожен створює свій застосунок).
+    if index_path is not None:
+        os.environ["INDEX_PATH"] = str(index_path)
+    if handler is not None:
+        if handler not in ("sync", "async"):
+            raise fail("--handler має бути sync або async")
+        os.environ["SEARCH_HANDLER"] = handler
+    level = os.environ.get("LOG_LEVEL", "info")
+    configure_logging(level)
+    uvicorn.run(
+        "findex.web.app:create_app",
+        factory=True,
+        host=host,
+        port=port,
+        workers=workers,
+        log_level=level,
+        access_log=False,  # кожен запит логує наш middleware — разом із request id
+        proxy_headers=True,
+    )
+
+
 def run_subcommand(name: str) -> None:
     """`python -m findex.index ARGS` == `findex index ARGS` (сумісність з лабою 2)."""
     app(args=[name, *sys.argv[1:]], prog_name=f"python -m findex.{name}")

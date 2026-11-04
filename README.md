@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/Mazurevych/findex/actions/workflows/ci.yml/badge.svg)](https://github.com/Mazurevych/findex/actions/workflows/ci.yml)
 
+**Живий сайт:** <!-- live-url -->_ще не розгорнуто_<!-- /live-url -->
+
 Навчальна пошукова система, яку я будую протягом курсу «Python» (8 лабораторних).
 Автор: Мазуревич Яків, гр. БІ-125-23-3-Б, КАІ.
 
@@ -13,6 +15,7 @@
 | 4. Типи, тести, пакування, CLI | `lab-04`, `v0.4.0` | pyright strict, 100+ тестів із Hypothesis, CLI `findex` на typer + rich, logging, CI — [розділ](#лаба-4--типи-тести-пакування-cli) |
 | 5. Паралельність і GIL | `lab-05` | `build_partial` + `merge`, `--executor serial\|threads\|processes`, бенчмарк із графіком, Python 3.13t без GIL, гонка даних — [розділ](#лаба-5--паралельність-і-gil) |
 | 6. Асинхронний краулер | `lab-06` | `findex crawl`: asyncio, `TaskGroup`, черга, семафори, robots.txt, повтори з backoff, бенчмарк 1/5/20 — [розділ](#лаба-6--асинхронний-краулер) |
+| 7. Вебпошук на FastAPI | `lab-07`, `v0.7.0` | API `/search` `/docs/{id}` `/stats` `/health`, сторінка з підсвіченими сніпетами, Docker, Render, `oha` — [розділ](#лаба-7--вебпошук-на-fastapi) |
 
 ## Швидкий старт
 
@@ -23,6 +26,7 @@ uv run findex index data/ --out index.bin --positions   # паралельно �
 uv run findex search index.bin '"context manager" NOT async' --k 5
 uv run findex stats index.bin
 uv run findex crawl https://www.python-httpx.org/ --max-pages 100   # див. лабу 6 про етику
+uv run findex serve --index index.bin           # http://127.0.0.1:8000 і API на /docs
 uv run pytest                                  # тести (+ --cov для покриття)
 uv run ruff check . && uv run ruff format --check . && uv run pyright
 ```
@@ -64,11 +68,12 @@ src/findex/
   search.py     search(): збіг (lru_cache) -> оцінки -> heapq.nlargest             (лаба 3)
   snippets.py   сніпети з підсвіченими термами                                     (лаба 3)
   timing.py     декоратор @timed                                                   (лаба 3)
-  cli.py        `findex index | search | stats | crawl` (typer + rich), logging    (лаби 4, 6)
+  cli.py        `findex index | search | stats | crawl | serve` (typer + rich)      (лаби 4, 6, 7)
+  web/          FastAPI: settings, models, app (API + HTML), templates/, static/  (лаба 7)
   parallel.py   plan_chunks, build_partial, merge, build_parallel                  (лаба 5)
   sysinfo.py    пік RSS процесу (Linux, macOS, Windows)                            (лаба 5)
   crawler/      fetch, robots, urls, parse, crawl — асинхронний краулер            (лаба 6)
-tests/          136 тестів, conftest.py з фікстурним корпусом, 5 Hypothesis-властивостей
+tests/          154 тести, conftest.py з фікстурним корпусом, 5 Hypothesis-властивостей
 eval/queries.json  10 запитів з ручною розміткою релевантності                    (лаба 3)
 scripts/
   get_corpus.py      завантаження корпусу
@@ -86,6 +91,10 @@ scripts/
   bench_crawl.py     лаба 6: краулер при concurrency 1 / 5 / 20
   finish-lab04.ps1   лаби 2–4: теги, wheel, uv.lock — кроки на власному ПК
   finish-lab06.ps1   лаби 5–6: оновлення uv.lock і теги
+  finish-lab07.ps1   лаба 7: uv.lock, потім oha по живому сайту і теги
+  bench_web.py       лаба 7: `def` vs `async def` для /search
+  loadtest.py        лаба 7: oha — локально і задеплоєний сервіс
+Dockerfile, render.yaml   лаба 7: двоетапний образ і Render Blueprint
 .github/workflows/ci.yml   лаба 4: ruff, pyright, pytest на Ubuntu і Windows + збирання wheel
 ```
 
@@ -900,3 +909,126 @@ INFO crawl done: 200 pages, 202 requests, 2 errors, 1 robots-blocked in 4.3s
   маленького сайту і чиста зупинка; ліміти concurrency і на хост; пауза між запитами; баг у
   робітнику → `ExceptionGroup`;
 - `findex crawl` через `CliRunner` → JSONL, який читає `iter_documents`, плюс журнал.
+| Target | Route | Concurrency | RPS | p50 (ms) | p95 | p99 | 200 OK |
+|---|---|---:|---:|---:|---:|---:|---:|
+| local, 1 worker, `async def` | `/search` | 50 | 13.3 | 4728 | 4914 | 5039 | 150/150 |
+| local, 1 worker, `def` | `/search` | 50 | 13.3 | 4598 | 5314 | 5347 | 150/150 |
+| local, 4 workers | `/search` | 50 | 21.7 | 3026 | 4756 | 4856 | 276/276 |
+
+## Лаба 7 — вебпошук на FastAPI
+
+```bash
+uv run findex serve --index index.bin                   # http://127.0.0.1:8000, API: /docs
+uv run findex serve --index index.bin --workers 4 --handler async
+docker build -t findex . && docker run --rm -p 8000:8000 findex
+uv run python scripts/bench_web.py index.bin            # def vs async def
+uv run python scripts/loadtest.py local index.bin       # oha, локально
+uv run python scripts/loadtest.py remote https://<сервіс>.onrender.com
+```
+
+### API (M1)
+
+`src/findex/web/` — FastAPI-застосунок, який створює `create_app(settings)`:
+
+| Маршрут | Що повертає | Помилки |
+|---|---|---|
+| `GET /search?q=&k=&scorer=&page=` | `SearchResponse{query, scorer, total, page, k, pages, took_ms, results: [SearchHit{doc_id, title, path, score, snippet}]}` | 422 — неправильні параметри (`q` 1–500 символів, `k` 1…50, `page` 1…1000, `scorer` лише `bm25`/`tfidf`); 400 — синтаксис запиту; 503 — індекс не завантажено |
+| `GET /docs/{doc_id}` | документ: заголовок, шлях, довжина, текст | 404 через `HTTPException`; 422 для `-1` |
+| `GET /stats` | документи, терми, постінги, токени, розмір файлу, uptime, версія | |
+| `GET /health` | `{"status": "ok", "documents": 1305}` | 503 `{"status": "unavailable"}`, якщо індекс не завантажився |
+| `GET /docs` | Swagger UI, згенерований з типів і Pydantic-моделей | |
+
+- **`lifespan`** завантажує індекс **один раз** зі `Settings.index_path` (через mmap) і кладе в
+  `app.state`; на завершенні закриває його. Якщо файлу немає, сервіс стартує, але `/health`
+  повертає 503, і платформа не пускає на нього трафік.
+- **Залежності**: `maybe_index` → `get_index` (503, якщо None), `settings_dep`. Маршрути не знають,
+  звідки береться індекс, тож тести підміняють `maybe_index` через `dependency_overrides`.
+- **Налаштування** — `pydantic-settings` лише зі змінних середовища або `.env` (`INDEX_PATH`,
+  `CORPUS_ROOT`, `INDEX_MMAP`, `SEARCH_HANDLER`, `MAX_K`, `LOG_LEVEL`). У коді немає ні шляхів, ні
+  секретів, тож той самий образ працює локально й на Render.
+- **Pydantic — на межі**: моделі запиту й відповіді в `web/models.py`. Усередині лишаються
+  dataclass з лаб 2–3: їх мільйони, і перевірка Pydantic там лише коштувала б часу.
+- **Помилки** — JSON з полем `detail`. Middleware дає кожному запиту `X-Request-ID` (або бере з
+  заголовка), логує `GET /search -> 200 14.6ms [rid=…]` і перетворює неочікуваний виняток на
+  чисту 500 `{"detail": "внутрішня помилка сервера", "request_id": "…"}`, а traceback пише в
+  журнал. Ця обробка знадобилась уже під час розробки: перша версія падала через
+  `from __future__ import annotations` (рядкові анотації не бачили локальних змінних
+  `create_app`), і замість traceback користувач бачив саме таку 500 з request id.
+- `findex serve [--index] [--host] [--port 8000] [--workers 1] [--handler sync|async]` обгортає
+  uvicorn, тож CLI лишається єдиною точкою входу. Налаштування передаються через змінні
+  середовища, бо кожен із `--workers N` процесів створює застосунок сам.
+
+### Тести і рішення `def` чи `async def` (M2)
+
+`tests/test_web.py`, 18 тестів через `TestClient` з `dependency_overrides`: індекс береться з
+фікстурного корпусу, без справжнього файлу. Перевіряються пошук, пагінація без повторів, фрази й
+TF-IDF, сім випадків 422, 400 на синтаксис запиту, документ і 404, `/stats`, `/health` 200 і 503,
+OpenAPI, чиста 500 з request id (і без тексту винятку у відповіді), HTML-сторінки, статичний CSS
+і варіант `async def`.
+
+`uv run python scripts/bench_web.py index.bin`: 20 одночасних `/search` (різні запити, щоб не
+міряти кеш), а паралельно `/health` кожні 10 мс; медіана з 3 прогонів, 2 ядра, Python 3.13:
+
+| Обробник | 20 запитів, wall, с | /search p50, мс | /search max, мс | /health p50, мс | /health max, мс |
+|---|---:|---:|---:|---:|---:|
+| `def` (пул потоків) | 1.26 | 1251 | 1254 | 6.3 | **548** |
+| `async def` (цикл подій) | 1.23 | 1226 | 1226 | 2.5 | **1211** |
+
+**Рішення: `def`.** Загальний час однаковий: пошук — це ≈ 60 мс чистого CPU, і GIL так чи
+інакше виконує 20 пошуків по черзі. Різниця в тому, **хто чекає**. В `async def` пошук виконується
+прямо в циклі подій і не має жодного `await`, тож поки йдуть 20 пошуків, цикл не обслуговує
+**нічого**: `/health` чекав 1.2 с, тобто всю пачку. На Render це означало б, що платформа
+вважатиме сервіс мертвим саме під навантаженням. В `def` FastAPI віддає пошук у пул потоків, і
+цикл подій лишається вільним. `/health` все одно чекав до 0.55 с, бо його потоку теж потрібен
+GIL, але це вдвічі менше. Тому `SEARCH_HANDLER=sync` стоїть за замовчуванням, а `async` лишився
+для порівняння.
+
+### Вебсторінка (M3)
+
+Jinja2-шаблони `web/templates/`, CSS через `StaticFiles` (`/static/style.css`):
+- `GET /` — пошуковий рядок, перемикач BM25/TF-IDF, результати з оцінкою, шляхом і сніпетом,
+  де терми підсвічено `<mark>`; пагінація; приклади запитів на головній; темна тема за
+  налаштуванням системи; мобільна верстка;
+- `GET /doc/{doc_id}?q=…` — повний текст документа з підсвіченими термами запиту.
+
+### Docker і розгортання (M4)
+
+- **`Dockerfile`** у два етапи. `build` (образ `uv`) ставить залежності строго з `uv.lock`
+  (`--frozen`, спершу без проєкту, щоб шар кешувався), сам пакет — не editable, скачує корпус
+  через `scripts/get_corpus.py` і будує `index.bin` з позиціями. `runtime` (`python:3.13-slim`)
+  містить лише `.venv`, корпус і індекс, без uv, git і компіляторів. Користувач **не root**
+  (`findex`, uid 10001), є `HEALTHCHECK`, порт береться зі змінної `PORT`.
+- **CI** (`.github/workflows/ci.yml`, задача `docker`) на кожен push збирає образ, запускає
+  контейнер, чекає `/health`, робить пошук і перевіряє, що процес не root.
+- **Render** (`render.yaml`, Blueprint): Docker, безкоштовний план, `healthCheckPath: /health`,
+  змінні середовища; логи кожного запиту з request id видно в Render Dashboard → Logs.
+
+### Навантажувальний тест (oha)
+
+`uv run python scripts/loadtest.py local index.bin`: `oha -z 15s -c 50` на
+`/search?q=asyncio+OR+generator&k=10`, той самий ноутбук-сервер (2 ядра Xeon, Python 3.13),
+індекс через mmap, сніпети ввімкнено. Рядок `deployed` — Render free (0.1 CPU), `-c 20`.
+
+<!-- lab07-load:start -->
+| Target | Route | Concurrency | RPS | p50 (ms) | p95 | p99 | 200 OK |
+|---|---|---:|---:|---:|---:|---:|---:|
+| local, 1 worker, `async def` | `/search` | 50 | 13.3 | 4728 | 4914 | 5039 | 150/150 |
+| local, 1 worker, `def` | `/search` | 50 | 13.3 | 4598 | 5314 | 5347 | 150/150 |
+| local, 4 workers | `/search` | 50 | 21.7 | 3026 | 4756 | 4856 | 276/276 |
+<!-- lab07-load:end -->
+
+**Як читати таблицю (зв'язок із лабами 5–6).**
+- **`async def` ≈ `def` за RPS (13.3 обидва).** Робота CPU-обмежена, і в одному процесі її
+  виконує один GIL, хоч у циклі подій, хоч у пулі потоків (лаба 5). Пул потоків не додає
+  пропускної здатності, він лише не дає зупинити цикл подій (див. `/health` вище).
+- **4 робітники → ×1.6 RPS** (13.3 → 21.7). Це процеси з лаби 5: у кожного свій інтерпретатор і
+  свій GIL. На 2 ядрах стеля — ×2, а решту з'їдає те, що 4 процеси ділять 2 ядра.
+- **p50/p99 у секундах — це черга, а не повільний пошук.** Один пошук займає ≈ 75 мс, але
+  50 клієнтів одночасно стоять у черзі. За законом Літтла очікування ≈ concurrency / RPS =
+  50 / 13.3 ≈ 3.8 с (виміряно 4.6), а з 4 робітниками 50 / 21.7 ≈ 2.3 с (виміряно 3.0). **p99
+  з 4 робітниками нижчий**, бо замість однієї черги до одного GIL є чотири, які обслуговуються
+  паралельно. Хвіст скорочується разом зі середнім.
+- **Задеплоєний сервіс** працює на частці одного ядра, тож його RPS обмежує CPU платформи, а
+  частину затримки додає мережа до Франкфурта. asyncio тут нічого не прискорить, бо, на відміну
+  від краулера з лаби 6, сервер не чекає мережу, а рахує.
+- Такий повільний (≈ 75 мс) пошук — привід для лаби 8: профілювання покаже, куди йде час.
